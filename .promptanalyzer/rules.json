@@ -1,0 +1,42 @@
+{
+  "companyName": "Default Organization",
+  "rules": [
+    {
+      "id": "no-pii",
+      "name": "No Personal Information",
+      "description": "Prompts must not contain emails, phone numbers, or SSN",
+      "pattern": "(\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b|\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b|\\b\\d{3}[-]?\\d{2}[-]?\\d{4}\\b)",
+      "action": "block",
+      "message": "Remove personal information (emails, phone numbers, SSN) before sending"
+    },
+    {
+      "id": "no-secrets",
+      "name": "No API Keys or Secrets",
+      "description": "Never include API keys, passwords, or secrets in prompts",
+      "pattern": "(api[_-]?key|secret|password|token|credential)\\s*[:=]\\s*['\"]?[a-zA-Z0-9_-]{8,}",
+      "action": "block",
+      "message": "Never include API keys, passwords, or secrets in prompts"
+    },
+    {
+      "id": "max-tokens",
+      "name": "Token Limit",
+      "description": "Prompts should not exceed 2000 tokens",
+      "maxTokens": 2000,
+      "action": "warn",
+      "message": "Prompt exceeds recommended token limit of 2000 tokens"
+    },
+    {
+      "id": "require-clarity",
+      "name": "Require Clear Task",
+      "description": "Prompts should clearly state what is expected",
+      "mustInclude": [],
+      "action": "suggest",
+      "message": "Consider adding a clear task description and expected output format"
+    }
+  ],
+  "optimization": {
+    "removeFillerWords": true,
+    "enforceStructure": true,
+    "addSystemContext": ""
+  }
+}

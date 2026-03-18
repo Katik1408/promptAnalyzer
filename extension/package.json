@@ -1,0 +1,45 @@
+{
+  "name": "promptanalyzer",
+  "displayName": "Prompt Analyzer",
+  "publisher": "acronite",
+  "description": "AI-powered prompt optimization for LLMs. Save tokens and money by automatically optimizing prompts before sending to GPT, Claude, etc.",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acronite/promptanalyzer"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "promptanalyzer.runPrompt",
+        "title": "Run Prompt Analyzer"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && node esbuild.js",
+    "package": "npm run check-types && node esbuild.js --production",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.2",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  }
+}
