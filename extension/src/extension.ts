@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
 
-// API URL - change this to your Railway URL after deployment
-// const API_BASE = process.env.PROMPTANALYZER_API_URL || 'https://your-app.railway.app';
-const API_BASE = 'http://localhost:4000';
+// API URL - Railway production server
+const API_BASE = 'https://promptanalyzer-production.up.railway.app';
 // Get unique machine ID for usage tracking
 function getMachineId(): string {
     return vscode.env.machineId;

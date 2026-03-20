@@ -1,12 +1,13 @@
 {
   "name": "promptanalyzer",
-  "displayName": "Prompt Analyzer",
+  "displayName": "Prompts Optimizer",
   "publisher": "acronite",
   "description": "AI-powered prompt optimization for LLMs. Save tokens and money by automatically optimizing prompts before sending to GPT, Claude, etc.",
   "version": "0.0.1",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/acronite/promptanalyzer"
+    "url": "https://github.com/Katik1408/promptAnalyzer"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -15,6 +16,7 @@
     "Machine Learning",
     "Other"
   ],
+  "keywords": ["prompt", "ai", "optimization", "gpt", "llm", "tokens"],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {

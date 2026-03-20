@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import nodemailer from 'nodemailer';
 import { initOpenAI, executePrompt, executePromptStream, TOKEN_LIMITS } from './services/openai';
 import { loadRules } from './services/rules';
 import { analyzeAndOptimize } from './services/optimizer';
@@ -84,12 +85,16 @@ app.post('/api/prompt/optimize', async (req: Request, res: Response) => {
     
     const result: OptimizationResult = await analyzeAndOptimize(prompt, rules, tier);
 
-    // Add usage info to response
+    // Increment usage AFTER successful optimization
+    incrementUsage(machineId);
+
+    // Add usage info to response (with updated count)
+    const updatedUsage = getUsageStats(machineId);
     const response = {
       ...result,
       usage: {
-        remaining: usage.remaining,
-        limit: usage.limit,
+        remaining: updatedUsage.remaining,
+        limit: updatedUsage.limit,
         tier,
       },
     };
@@ -251,8 +256,45 @@ app.post('/api/prompt/run', async (req: Request, res: Response) => {
   }
 });
 
+// Email transporter for feedback notifications
+const emailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Send feedback email notification
+async function sendFeedbackEmail(feedback: any): Promise<void> {
+  const stars = '⭐'.repeat(feedback.rating);
+  const improvements = feedback.improvements?.length > 0 
+    ? feedback.improvements.join(', ') 
+    : 'None specified';
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: 'katik.ks@gmail.com',
+    subject: `Prompt Analyzer Feedback: ${feedback.rating}/5 ${stars}`,
+    html: `
+      <h2>New Feedback Received</h2>
+      <table style="border-collapse: collapse; width: 100%;">
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Rating</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${feedback.rating}/5 ${stars}</td></tr>
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Quality</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${feedback.quality || 'Not specified'}</td></tr>
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Would Use Again</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${feedback.useAgain || 'Not specified'}</td></tr>
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Improvements</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${improvements}</td></tr>
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Comments</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${feedback.comments || 'No comments'}</td></tr>
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>User ID</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${feedback.machineId.slice(0, 12)}...</td></tr>
+        <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Timestamp</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${feedback.timestamp}</td></tr>
+      </table>
+    `,
+  };
+
+  await emailTransporter.sendMail(mailOptions);
+}
+
 // Feedback endpoint
-app.post('/api/feedback', (req: Request, res: Response) => {
+app.post('/api/feedback', async (req: Request, res: Response) => {
   try {
     const machineId = getMachineId(req);
     const { rating, quality, useAgain, improvements, comments } = req.body;
@@ -267,22 +309,14 @@ app.post('/api/feedback', (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Store feedback in a JSON file
-    const feedbackDir = path.join(process.cwd(), 'data');
-    const feedbackPath = path.join(feedbackDir, 'feedback.json');
-    
-    if (!fs.existsSync(feedbackDir)) {
-      fs.mkdirSync(feedbackDir, { recursive: true });
+    // Send email notification
+    try {
+      await sendFeedbackEmail(feedback);
+      console.log(`📧 Feedback email sent: ${rating}⭐ from ${machineId.slice(0, 8)}...`);
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      // Continue even if email fails
     }
-    
-    let feedbackData: any[] = [];
-    
-    if (fs.existsSync(feedbackPath)) {
-      feedbackData = JSON.parse(fs.readFileSync(feedbackPath, 'utf-8'));
-    }
-    
-    feedbackData.push(feedback);
-    fs.writeFileSync(feedbackPath, JSON.stringify(feedbackData, null, 2));
 
     console.log(`📝 Feedback received: ${rating}⭐ from ${machineId.slice(0, 8)}...`);
     res.json({ success: true });
