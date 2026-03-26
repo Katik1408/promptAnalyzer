@@ -1,8 +1,39 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
 
-// API URL - Railway production server
-const API_BASE = 'https://promptanalyzer-production.up.railway.app';
+const DEFAULT_API_BASE = 'https://promptanalyzer-production.up.railway.app';
+const CONSENT_KEY = 'promptanalyzer.hasAcceptedApiConsent';
+
+function getApiBaseUrl(): string {
+    const configuredUrl = vscode.workspace
+        .getConfiguration('promptanalyzer')
+        .get<string>('apiBaseUrl', DEFAULT_API_BASE)
+        ?.trim();
+
+    return configuredUrl && configuredUrl.length > 0 ? configuredUrl : DEFAULT_API_BASE;
+}
+
+async function ensureApiConsent(context: vscode.ExtensionContext): Promise<boolean> {
+    const alreadyAccepted = context.globalState.get<boolean>(CONSENT_KEY, false);
+    if (alreadyAccepted) {
+        return true;
+    }
+
+    const consent = await vscode.window.showWarningMessage(
+        'Prompt Analyzer sends your selected prompt text and optional feedback to the configured backend API for optimization. Continue?',
+        { modal: true },
+        'I Understand',
+        'Cancel'
+    );
+
+    if (consent !== 'I Understand') {
+        return false;
+    }
+
+    await context.globalState.update(CONSENT_KEY, true);
+    return true;
+}
+
 // Get unique machine ID for usage tracking
 function getMachineId(): string {
     return vscode.env.machineId;
@@ -41,6 +72,11 @@ interface OptimizationResult {
 
 export function activate(context: vscode.ExtensionContext) {
     const disposable = vscode.commands.registerCommand('promptanalyzer.runPrompt', async () => {
+        const consentAccepted = await ensureApiConsent(context);
+        if (!consentAccepted) {
+            return;
+        }
+
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor');
@@ -62,10 +98,11 @@ export function activate(context: vscode.ExtensionContext) {
 
         try {
             vscode.window.showInformationMessage('🔍 Analyzing and optimizing prompt...');
+            const apiBaseUrl = getApiBaseUrl();
 
             // Step 1: Get optimization preview
             const optimizeResponse = await axios.post(
-                `${API_BASE}/api/prompt/optimize`,
+                `${apiBaseUrl}/api/prompt/optimize`,
                 { prompt: selectedText },
                 { headers: getHeaders() }
             );
@@ -496,8 +533,9 @@ function showOptimizationPreview(result: OptimizationResult) {
             });
         } else if (message.command === 'submitFeedback') {
             try {
+                const apiBaseUrl = getApiBaseUrl();
                 await axios.post(
-                    `${API_BASE}/api/feedback`,
+                    `${apiBaseUrl}/api/feedback`,
                     message.feedback,
                     { headers: getHeaders() }
                 );

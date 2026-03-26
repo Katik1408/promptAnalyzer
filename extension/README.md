@@ -1,29 +1,63 @@
-# Prompt Analyzer - VS Code Extension
+# RePromptr
 
-AI-powered prompt optimization for LLMs. Save tokens and money by automatically optimizing prompts before sending to GPT, Claude, etc.
+AI-powered prompt optimization for VS Code. Select a prompt, optimize it through your configured backend API, and copy the improved version with token savings details.
 
 ## Features
 
-- **AI-Powered Prompt Optimization** — Automatically removes filler words, restructures for clarity
-- **Token Savings Visualization** — See exactly how many tokens you're saving
-- **Custom Company Rules** — Define organization-specific rules
-- **Preview Before Send** — Review optimized prompts with Confirm/Reject buttons
-- **Usage Tracking** — Free tier with 5 prompts/day (Pro coming soon!)
+- Prompt optimization preview before use
+- Token comparison and savings percentage
+- Rule-violation display (block/warn/suggest)
+- One-click copy of optimized prompt
+- In-panel feedback form
+- Free-tier usage tracking from backend
 
-## Usage
+## Getting Started
 
-1. Select text in your editor
-2. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows)
-3. Type "Run Prompt Analyzer"
-4. Review the optimized prompt
-5. Click "Copy Optimized Prompt" to use it
+1. Install the extension.
+2. Open VS Code settings and search for `Prompt Analyzer: Api Base Url`.
+3. Set your backend URL if different from default.
+4. Select prompt text in an editor file.
+5. Run `Run RePromptr` from Command Palette.
+6. On first use, accept the consent prompt to allow API processing.
+
+## Configuration
+
+This extension contributes the following setting:
+
+- `promptanalyzer.apiBaseUrl`: Backend API base URL used for optimization and feedback requests.
+
+Default value:
+
+`https://promptanalyzer-production.up.railway.app`
+
+## Privacy and Data Flow
+
+When you run the command, the extension sends the following to the configured backend API:
+
+- Selected prompt text
+- Anonymous machine identifier (`vscode.env.machineId`) in request headers
+- Optional feedback form fields when submitted
+
+The extension does not directly send your data to OpenAI. Your configured backend is responsible for any upstream AI provider calls.
+
+On first command run, the extension asks for consent before sending prompt content to the backend API.
+
+## Troubleshooting
+
+- If you see backend connection errors, verify `promptanalyzer.apiBaseUrl`.
+- If usage limit is reached, wait for reset or upgrade backend plan/tier.
+- If optimization fails, check backend logs and API key configuration.
 
 ## Pricing
 
 | Tier | Prompts/Day | Price |
 |------|-------------|-------|
-| **Free** | 5 | $0 |
-| **Pro** | Unlimited | Coming Soon |
+| Free | 5 | $0 |
+| Pro | Unlimited | Coming Soon |
+
+## Repository
+
+`https://github.com/Katik1408/promptAnalyzer`
 
 ## License
 
